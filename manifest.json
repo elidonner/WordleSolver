@@ -1,0 +1,31 @@
+{
+  "name": "Wordle Solver!",
+  "description": "Displays possible remaining words",
+  "version": "1.0",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "/images/WordleIcon_16.png",
+      "32": "/images/WordleIcon_32.png",
+      "48": "/images/WordleIcon_48.png",
+      "128": "/images/WordleIcon_128.png"
+    }
+  },
+  "icons": {
+    "16": "/images/WordleIcon_16.png",
+    "32": "/images/WordleIcon_32.png",
+    "48": "/images/WordleIcon_48.png",
+    "128": "/images/WordleIcon_128.png"
+  },
+  "content_scripts":[
+    {
+      "matches" :["https://www.nytimes.com/games/wordle/index.html"],
+      "js": ["content-script.js"]
+    }
+  ]
+}
