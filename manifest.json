@@ -3,9 +3,7 @@
   "description": "Displays possible remaining words",
   "version": "1.0",
   "manifest_version": 3,
-  "background": {
-    "service_worker": "background.js"
-  },
+  "options_page": "options.html",
   "permissions": ["storage", "activeTab", "scripting"],
   "action": {
     "default_popup": "popup.html",
@@ -25,7 +23,10 @@
   "content_scripts":[
     {
       "matches" :["https://www.nytimes.com/games/wordle/index.html"],
-      "js": ["content-script.js"]
+      "js": [
+        "./content-scripts/wordList.js",
+        "./content-scripts/solver.js"
+      ]
     }
   ]
 }
