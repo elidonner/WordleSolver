@@ -1,27 +1,11 @@
 let alphabet = 'abcdefghijklmnopqrstuvwxyz'
 
-//Handle the response of either message from background.js or content.js
-function handle_response(response){
-    // do stuff with response (which will be the value of messageQueue
-    // sent from background.js).
-    wordList = beginningWordList; //initialize wordList incase you've come back on new day with new messageQueue!
-    if (response.length == 0){
-      document.getElementById("possible").innerHTML = 'Open Wordle and make a guess!'
-    } else {
-      
-      for(let i = 0; i < response.length; i++){
-        wordList = filter_word_list(response[i])
-      }
-      //send possible words
-      document.getElementById("possible").innerHTML = wordList.map(word => `${word[0].toUpperCase().concat(word.slice(1,word.length))}`).join(', ')
-      // send number of posible words, if statement for including s or not
-      document.getElementById("numWords").innerHTML = `${wordList.length} possible word${wordList.length > 1 ? 's' : ''}`;
-    }
-}
-
 //Actual solver from wordle
 //TODO: break into functions for readabillity
 function filter_word_list(guess){
+let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
+console.log(boardState); console.log(evaluations);
+
   word = guess.letters; response = guess.evaluation;
 
   for(let i = 0; i < response.length; i++){

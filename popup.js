@@ -1,142 +1,17 @@
-let alphabet = 'abcdefghijklmnopqrstuvwxyz'
-
 // If I open popup, send a message to background and get a response with the guess queue
-chrome.runtime.sendMessage({type: 'from_popup'}, (response) => {
-  handle_response(response);
-});
-
-//This listener receives message from_content script, so if the user for some reason is inspecting popup and it is open, it will still update since content-script is triggered on "enter" event listener
-const messageQueue = [];
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Arbitrary string allowing the background to distinguish
-  // message types. You might also be able to determine this
-  // from the `sender`.
-  if (message.type === 'from_content_script') {
-    messageQueue.push(message.guess);
-    handle_response(messageQueue);
-  }
-});
-
-//Handle the response of either message from background.js or content.js
-function handle_response(response){
-    // do stuff with response (which will be the value of messageQueue
-    // sent from background.js).
-    wordList = beginningWordList; //initialize wordList incase you've come back on new day with new messageQueue!
-    if (response.length == 0){
-      document.getElementById("possible").innerHTML = 'Open Wordle and make a guess!'
-    } else {
-      
-      for(let i = 0; i < response.length; i++){
-        wordList = filter_word_list(response[i])
-      }
-      //send possible words
-      document.getElementById("possible").innerHTML = wordList.map(word => `${word[0].toUpperCase().concat(word.slice(1,word.length))}`).join(', ')
-      // send number of posible words, if statement for including s or not
-      document.getElementById("numWords").innerHTML = `${wordList.length} possible word${wordList.length > 1 ? 's' : ''}`;
-    }
-}
-
-//Actual solver from wordle
-//TODO: break into functions for readabillity
-function filter_word_list(guess){
-  word = guess.letters; response = guess.evaluation;
-
-  for(let i = 0; i < response.length; i++){
-    if(response[i] == 0){
-      try{
-        alphabet = alphabet.replace(word[0],'');
-      } catch {
-        text1 = "why'd you guess that? you already used "
-        text2 = ", silly!"
-        text = text1.concat(word[i]).concat(text2)
-        return text
-      }
-    }
-  }
-
-  new_list = wordList
-  for(let i = 0; i < response.length; i++){
-    //if the letter was green, new_list only contains words with green letter in this index
-    if(response[i] == 1){
-      temp_list = [];
-      for (let j=0; j < new_list.length; j++){
-        if(word[i] == new_list[j][i]){
-          temp_list.push(new_list[j]);
-          //recheck same index since we popped
-        }
-      }
-      new_list = temp_list
-    }
-
-    //if the letter was gray, new_list doesn't contain words with this letter, unless that letter is green elsewhere
-    else if(response[i] == 0){
-      new_list = check_gray(word, response, new_list, i)
-    }
-
-    //or if the letter was yellow, new_list doesn't contain words with letter in this index, but contains only words with this letter in remaining indices (gray indices)
-    else if(response[i] == 2){
-
-        //get rid of all words with yellow leter in this index
-        let j = 0
-        while(j < new_list.length){
-            if (word[i] == new_list[j][i]){
-              new_list.splice(j,1);
-              //recheck same index since we popped
-            } else{j++;}
-        }
-
-        //new_list only contains words with yellow letter in remaining indices
-        temp_list = []
-        for (j=0; j < response.length; j++){
-          //if the letter is not green
-          if(response[j] != 1){
-            //find words with yellow letter in this index (I have already removed words for yellow letter in index, so new_list is safe)
-            for(let q = 0; q < new_list.length; q++){
-              if(word[i] == new_list[q][j]){
-                temp_list.push(new_list[q]);
-              }
-              //recheck same index since we popped
-            }
-          }
-        }
-                    
-        new_list = temp_list;
-    }
-  }
-  wordList = new_list.sort();
-  return wordList
-}
 
 
-//check the gray word, check for edge case that a gray letter is already in the word green elsewhere
-function check_gray(word, response, new_list, index){
-  i = index;
-  //check if the letter is somewhere else green
-  for(let j = 0; j<response.length; j++){
-    if(j!=i){
-      if(word[i]==word[j]){
-        if(response[j]!=0){
-          // If we have reached there, then gray letter is elsewhere in the word, just delete all the words that have the letter in this index
-          let q = 0
-          while(q < new_list.length){
-              if (word[i] == new_list[q][i]){
-                new_list.splice(q,1);
-                //recheck same index since we popped
-              } else{q++;}
-          }
-          return new_list;
-        }
-      }
-    }
-  }
+document.addEventListener('DOMContentLoaded', async () => {
+  const possibleHTML = document.getElementById('possible');
+  const numWords = document.getElementById('numWords');
 
-  //new list doesn't contain word with this letter
-  let j = 0;
-  while(j < new_list.length){
-      if(new_list[j].includes(word[i])){
-        new_list.splice(j,1);
-        //recheck same index since we popped
-      } else{j++;}
-  }
-  return new_list
-}
+  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  // Send empty message to solver.js to get state and update
+  await chrome.tabs.sendMessage(tab.id, {}, ({ possible={}, settings={} }) => {
+    //send possible words
+    possibleHTML.innerHTML = wordList.map(word => `${word[0].toUpperCase().concat(word.slice(1,word.length))}`).join(', ')
+
+    // send number of posible words, if statement for including s or not
+    numWords.innerHTML = `${wordList.length} possible word${wordList.length > 1 ? 's' : ''}`;
+  });
+})
