@@ -1,29 +1,46 @@
 let alphabet = 'abcdefghijklmnopqrstuvwxyz'
 var wordList; //set to global
-set_word_list(); 
+selection = 'lessCheating'
+//chrome.storage.sync.set({'selection': selection}); //initialize
+set_word_list(); //initialize
 
-function set_word_list(){
-    try{
-        chrome.storage.sync.get("selection", ({ selection }) => {
-            console.log(selection)
-            select_mode(selection);
-            console.log(wordList)
-            });
-    }catch{
-        select_mode();
-    }
-}
 
 function select_mode(mode = "lessCheating"){
-    if (mode == "lessCheating"){
-        wordList = possibleFiveLetterWords;
-    }else if(mode == "cheating"){
+    console.log(wordleWords.length);
+    console.log(possibleFiveLetterWords.length);
+    if (mode == "cheating"){
         wordList = wordleWords;
+    }else{
+        wordList = possibleFiveLetterWords;
     }
 }
 
-function filter_word_list(){
-    set_word_list();
+async function set_word_list(){
+    // const readSyncStorage = async (key) => {
+    //     return new Promise((resolve, reject) => {
+    //       chrome.storage.sync.get([key], function (result) {
+    //         if (result[key] === undefined) {
+    //           reject();
+    //         } else {
+    //           resolve(result[key]);
+    //         }
+    //       });
+    //     });
+    //   };
+      
+    //   mode = readSyncStorage(selection);
+    //   console.log(mode);
+    //   select_mode(mode);
+
+    answer = await chrome.storage.sync.get(["selection"]),
+    console.log(answer.selection);
+    select_mode(answer.selection);
+};
+
+
+
+async function filter_word_list(){
+    await set_word_list();
     console.log(wordList);
 
     let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
@@ -34,9 +51,8 @@ function filter_word_list(){
         eval = convert_eval(evaluations[i]);
         let word = boardState[i];
 
-        console.log(eval);
         if(eval != null){
-            wordList = solve({word, eval});
+            solve({word, eval});
         }else{return wordList}
     }
 
@@ -127,8 +143,9 @@ function solve(guess){
         new_list = temp_list;
     }
   }
-  wordList = new_list.sort();
-  return wordList
+
+
+  wordList = new_list.sort(); //update global
 }
 
 
@@ -192,7 +209,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // from the `sender`.
     if (message.type === 'from_popup') {
         try {
-            let wordList = filter_word_list()
+            filter_word_list()
             sendResponse({wordList});
         } catch (e) {
             console.error("encountered JSON parse error", e);
@@ -200,7 +217,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   });
 
-// Run when wordle page first opens
 chrome.runtime.sendMessage({type: 'from_solver',
     wordList: filter_word_list()
 });
