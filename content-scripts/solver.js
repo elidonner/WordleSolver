@@ -1,9 +1,13 @@
 let alphabet = 'abcdefghijklmnopqrstuvwxyz'
 var wordList; //set to global
+selection = 'lessCheating'
+//chrome.storage.sync.set({'selection': selection}); //initialize
 set_word_list(); //initialize
 
 
 function select_mode(mode = "lessCheating"){
+    console.log(wordleWords.length);
+    console.log(possibleFiveLetterWords.length);
     if (mode == "cheating"){
         wordList = wordleWords;
     }else{
@@ -11,14 +15,32 @@ function select_mode(mode = "lessCheating"){
     }
 }
 
-function set_word_list(){
-    let selection = chrome.storage.sync.get(['selection']);
-    console.log(selection);
-    select_mode(selection);
+async function set_word_list(){
+    // const readSyncStorage = async (key) => {
+    //     return new Promise((resolve, reject) => {
+    //       chrome.storage.sync.get([key], function (result) {
+    //         if (result[key] === undefined) {
+    //           reject();
+    //         } else {
+    //           resolve(result[key]);
+    //         }
+    //       });
+    //     });
+    //   };
+      
+    //   mode = readSyncStorage(selection);
+    //   console.log(mode);
+    //   select_mode(mode);
+
+    answer = await chrome.storage.sync.get(["selection"]),
+    console.log(answer.selection);
+    select_mode(answer.selection);
 };
 
-function filter_word_list(){
-    set_word_list();
+
+
+async function filter_word_list(){
+    await set_word_list();
     console.log(wordList);
 
     let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);

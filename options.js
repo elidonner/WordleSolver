@@ -17,7 +17,7 @@ function cheating_selection(num) {
     }
 
     chrome.storage.sync.set({'selection': selection})
-    console.log(chrome.storage.sync.get('selection'));
+    console.log( chrome.storage.sync.get(['selection']))
 }
 
 //FIXME: cleaner way to do this?
