@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const numWords = document.getElementById('numWords');
 
   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  // Send empty message to solver.js to get state and update
-  await chrome.tabs.sendMessage(tab.id, {}, ({ possible={}, settings={} }) => {
+  // Send message to solver.js to get state and update
+  await chrome.tabs.sendMessage(tab.id, {type: 'from_popup'},({wordList={}}) => {
     //send possible words
     possibleHTML.innerHTML = wordList.map(word => `${word[0].toUpperCase().concat(word.slice(1,word.length))}`).join(', ')
 

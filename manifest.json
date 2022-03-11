@@ -4,9 +4,6 @@
   "version": "1.0",
   "manifest_version": 3,
   "options_page": "options.html",
-  "background": {
-    "service_worker": "background.js"
-  },
   "permissions": ["storage", "activeTab", "scripting"],
   "action": {
     "default_popup": "popup.html",
@@ -27,8 +24,7 @@
     {
       "matches" :["https://www.nytimes.com/games/wordle/index.html"],
       "js": [
-        "./content-scripts/content-script.js",
-        "./content-scripts/beginningList.js",
+        "./content-scripts/wordList.js",
         "./content-scripts/solver.js"
       ]
     }

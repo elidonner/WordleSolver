@@ -1,12 +1,69 @@
 let alphabet = 'abcdefghijklmnopqrstuvwxyz'
+var wordList; //set to global
+set_word_list(); 
 
-//Actual solver from wordle
+function set_word_list(){
+    try{
+        chrome.storage.sync.get("selection", ({ selection }) => {
+            console.log(selection)
+            select_mode(selection);
+            console.log(wordList)
+            });
+    }catch{
+        select_mode();
+    }
+}
+
+function select_mode(mode = "lessCheating"){
+    if (mode == "lessCheating"){
+        wordList = possibleFiveLetterWords;
+    }else if(mode == "cheating"){
+        wordList = wordleWords;
+    }
+}
+
+function filter_word_list(){
+    set_word_list();
+    console.log(wordList);
+
+    let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
+    //console.log(boardState); console.log(evaluations);
+
+    //filter word list for all nonempty guesses
+    for (let i = 0; i<boardState.length; i++){
+        eval = convert_eval(evaluations[i]);
+        let word = boardState[i];
+
+        console.log(eval);
+        if(eval != null){
+            wordList = solve({word, eval});
+        }else{return wordList}
+    }
+
+}
+
+//make eval something a little easier on my solver 
+//FIXME: probably unnecessary
+function convert_eval(evaluation){
+    let eval = "";
+    if(evaluation != null){
+        for (let j=0; j<evaluation.length; j++){
+            if (evaluation[j] == "correct"){
+                eval = eval.concat("1")
+            } else if (evaluation[j] == "absent"){
+                eval = eval.concat("0")
+            }else if (evaluation[j] == "present"){
+                eval = eval.concat("2")
+            }else{return null;}
+        }
+        return eval
+    } else{return null;}
+
+}
+
 //TODO: break into functions for readabillity
-function filter_word_list(guess){
-let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
-console.log(boardState); console.log(evaluations);
-
-  word = guess.letters; response = guess.evaluation;
+function solve(guess){
+  word = guess.word; response = guess.eval;
 
   for(let i = 0; i < response.length; i++){
     if(response[i] == 0){
@@ -107,3 +164,44 @@ function check_gray(word, response, new_list, index){
   }
   return new_list
 }
+
+
+
+
+/*
+*
+*
+CHROME EVENT LISTENERS
+*
+*
+*/
+
+// Listen to keyboard enters to update
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        chrome.runtime.sendMessage({
+            wordList: filter_word_list(), 
+        });
+    }
+})
+
+// Listen to message from popup.js and respond
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Arbitrary string allowing the background to distinguish
+    // message types. You might also be able to determine this
+    // from the `sender`.
+    if (message.type === 'from_popup') {
+        try {
+            let wordList = filter_word_list()
+            sendResponse({wordList});
+        } catch (e) {
+            console.error("encountered JSON parse error", e);
+        }
+    }
+  });
+
+// Run when wordle page first opens
+chrome.runtime.sendMessage({type: 'from_solver',
+    wordList: filter_word_list()
+});
+  
