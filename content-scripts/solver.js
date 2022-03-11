@@ -1,22 +1,5 @@
 let alphabet = 'abcdefghijklmnopqrstuvwxyz'
 
-// If I open popup, send a message to background and get a response with the guess queue
-chrome.runtime.sendMessage({type: 'from_popup'}, (response) => {
-  handle_response(response);
-});
-
-//This listener receives message from_content script, so if the user for some reason is inspecting popup and it is open, it will still update since content-script is triggered on "enter" event listener
-const messageQueue = [];
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Arbitrary string allowing the background to distinguish
-  // message types. You might also be able to determine this
-  // from the `sender`.
-  if (message.type === 'from_content_script') {
-    messageQueue.push(message.guess);
-    handle_response(messageQueue);
-  }
-});
-
 //Handle the response of either message from background.js or content.js
 function handle_response(response){
     // do stuff with response (which will be the value of messageQueue

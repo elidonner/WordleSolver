@@ -3,6 +3,7 @@
   "description": "Displays possible remaining words",
   "version": "1.0",
   "manifest_version": 3,
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
   },
@@ -25,7 +26,11 @@
   "content_scripts":[
     {
       "matches" :["https://www.nytimes.com/games/wordle/index.html"],
-      "js": ["content-script.js"]
+      "js": [
+        "./content-scripts/content-script.js",
+        "./content-scripts/beginningList.js",
+        "./content-scripts/solver.js"
+      ]
     }
   ]
 }

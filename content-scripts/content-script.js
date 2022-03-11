@@ -1,7 +1,6 @@
 //FIXME: use this instead to access solutions!
 let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
 console.log(boardState); console.log(evaluations);
-console.log(JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]));
 
 //access the game board through shadow roots
 const $game_board = document.querySelector("game-app").shadowRoot.getElementById("board")
