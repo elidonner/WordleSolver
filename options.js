@@ -1,6 +1,5 @@
 // cheating type handler
 function cheating_selection(num) {
-    console.log('button clicked')
     switch (num) {
         case 1:
             document.getElementById("lessCheating").classList.add('selected');
@@ -16,10 +15,9 @@ function cheating_selection(num) {
             "#ffccbc";
             break;
     }
-    to_log = "mode from options set to ".concat(selection)
-    console.log(to_log);
 
-    chrome.storage.sync.set({selection});
+    chrome.storage.sync.set({'selection': selection})
+    console.log(chrome.storage.sync.get('selection'));
 }
 
 //FIXME: cleaner way to do this?
