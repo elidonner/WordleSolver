@@ -193,8 +193,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // from the `sender`.
     if (message.type === 'from_popup') {
         try {
-            console.log('message received from popup')
-            filter_word_list()
+            filter_word_list();
             sendResponse({wordList});
         } catch (e) {
             console.error("encountered JSON parse error", e);
