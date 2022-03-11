@@ -5,36 +5,20 @@ selection = 'lessCheating'
 set_word_list(); //initialize
 
 
-function select_mode(mode = "lessCheating"){
+async function select_mode(mode = "lessCheating"){
     console.log(wordleWords.length);
     console.log(possibleFiveLetterWords.length);
     if (mode == "cheating"){
-        wordList = wordleWords;
+        wordList = wordleWords.map((x) => x);
     }else{
-        wordList = possibleFiveLetterWords;
+        wordList = possibleFiveLetterWords.map((x) => x);
     }
 }
 
 async function set_word_list(){
-    // const readSyncStorage = async (key) => {
-    //     return new Promise((resolve, reject) => {
-    //       chrome.storage.sync.get([key], function (result) {
-    //         if (result[key] === undefined) {
-    //           reject();
-    //         } else {
-    //           resolve(result[key]);
-    //         }
-    //       });
-    //     });
-    //   };
-      
-    //   mode = readSyncStorage(selection);
-    //   console.log(mode);
-    //   select_mode(mode);
-
     answer = await chrome.storage.sync.get(["selection"]),
     console.log(answer.selection);
-    select_mode(answer.selection);
+    await select_mode(answer.selection);
 };
 
 
@@ -209,6 +193,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // from the `sender`.
     if (message.type === 'from_popup') {
         try {
+            console.log('message received from popup')
             filter_word_list()
             sendResponse({wordList});
         } catch (e) {
