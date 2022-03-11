@@ -1,4 +1,4 @@
-// If I open popup, send a message to background and get a response with the guess queue
+// If I open popup, send a message to background and get a response with the guess
 
 
 document.addEventListener('DOMContentLoaded', async () => {
