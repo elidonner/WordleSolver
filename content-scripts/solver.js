@@ -192,16 +192,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   });
 
-//  // Listen to keyboard enters to update
-// document.addEventListener('keyup', (e) => {
-//     if (e.key === 'Enter') {
-//         chrome.runtime.sendMessage({
-//             wordList: filter_word_list(), 
-//         });
-//     }
-// })
+ // Listen to keyboard enters to update
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        chrome.runtime.sendMessage({
+            wordList: filter_word_list(), 
+        });
+    }
+})
 
-// chrome.runtime.sendMessage({type: 'from_solver',
-//     wordList: filter_word_list()
-// });
+chrome.runtime.sendMessage({type: 'from_solver',
+    wordList: filter_word_list()
+});
   
