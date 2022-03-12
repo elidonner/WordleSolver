@@ -21,8 +21,6 @@ async function set_word_list(){
     await select_mode(answer.selection);
 };
 
-
-
 async function filter_word_list(){
     await set_word_list();
     console.log(wordList);
@@ -177,14 +175,7 @@ CHROME EVENT LISTENERS
 *
 */
 
-// Listen to keyboard enters to update
-document.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') {
-        chrome.runtime.sendMessage({
-            wordList: filter_word_list(), 
-        });
-    }
-})
+
 
 // Listen to message from popup.js and respond
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -201,7 +192,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   });
 
-chrome.runtime.sendMessage({type: 'from_solver',
-    wordList: filter_word_list()
-});
+//  // Listen to keyboard enters to update
+// document.addEventListener('keyup', (e) => {
+//     if (e.key === 'Enter') {
+//         chrome.runtime.sendMessage({
+//             wordList: filter_word_list(), 
+//         });
+//     }
+// })
+
+// chrome.runtime.sendMessage({type: 'from_solver',
+//     wordList: filter_word_list()
+// });
   
