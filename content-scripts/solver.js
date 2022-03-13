@@ -1,27 +1,26 @@
+//global variables
 let alphabet = 'abcdefghijklmnopqrstuvwxyz'
-var wordList; //set to global
-selection = 'lessCheating'
+var wordList;
+var solution;
 //chrome.storage.sync.set({'selection': selection}); //initialize
-set_word_list(); //initialize
+select_mode(); //initialize to less cheating
 
 
 async function select_mode(mode = "lessCheating"){
     if (mode == "cheating"){
         wordList = wordleWords.map((x) => x);
-    }else{
+    }else if(mode == "mostCheating"){
+        wordList = solution
+    } else{
         wordList = possibleFiveLetterWords.map((x) => x);
     }
 }
 
-async function set_word_list(){
-    answer = await chrome.storage.sync.get(["selection"]),
-    await select_mode(answer.selection);
-};
-
 async function filter_word_list(){
-    await set_word_list();
+    let { boardState = [], evaluations = [], solution = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
 
-    let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
+    mode = await chrome.storage.sync.get(["selection"]).selection,
+    await select_mode(mode);
 
     //filter word list for all nonempty guesses
     for (let i = 0; i<boardState.length; i++){
