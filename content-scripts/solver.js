@@ -6,8 +6,6 @@ set_word_list(); //initialize
 
 
 async function select_mode(mode = "lessCheating"){
-    console.log(wordleWords.length);
-    console.log(possibleFiveLetterWords.length);
     if (mode == "cheating"){
         wordList = wordleWords.map((x) => x);
     }else{
@@ -17,16 +15,13 @@ async function select_mode(mode = "lessCheating"){
 
 async function set_word_list(){
     answer = await chrome.storage.sync.get(["selection"]),
-    console.log(answer.selection);
     await select_mode(answer.selection);
 };
 
 async function filter_word_list(){
     await set_word_list();
-    console.log(wordList);
 
     let { boardState = [], evaluations = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
-    //console.log(boardState); console.log(evaluations);
 
     //filter word list for all nonempty guesses
     for (let i = 0; i<boardState.length; i++){
@@ -195,13 +190,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  // Listen to keyboard enters to update
 document.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') {
-        chrome.runtime.sendMessage({
-            wordList: filter_word_list(), 
-        });
+    filter_word_list();
     }
 })
 
-chrome.runtime.sendMessage({type: 'from_solver',
-    wordList: filter_word_list()
-});
+//run filter_word_list when page opens, should help if previous guesses have been made
+filter_word_list();
   
