@@ -21,7 +21,7 @@ function cheating_selection(num) {
             document.getElementById("lessCheating").classList.remove('selected');
             document.getElementById("cheating").classList.remove('selected');
             document.getElementById("mostCheating").classList.add('selected');
-            var selection = "cheating"
+            var selection = "mostCheating"
             document.body.style.backgroundColor = 
             "#C34D33";
             break;

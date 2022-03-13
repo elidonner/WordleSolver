@@ -1,7 +1,7 @@
 //global variables
 let alphabet = 'abcdefghijklmnopqrstuvwxyz'
 var wordList;
-var solution;
+var answer;
 //chrome.storage.sync.set({'selection': selection}); //initialize
 select_mode(); //initialize to less cheating
 
@@ -10,7 +10,7 @@ async function select_mode(mode = "lessCheating"){
     if (mode == "cheating"){
         wordList = wordleWords.map((x) => x);
     }else if(mode == "mostCheating"){
-        wordList = solution
+        wordList = answer;
     } else{
         wordList = possibleFiveLetterWords.map((x) => x);
     }
@@ -18,8 +18,10 @@ async function select_mode(mode = "lessCheating"){
 
 async function filter_word_list(){
     let { boardState = [], evaluations = [], solution = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
+    answer = [solution]; //weird global variable thing
 
-    mode = await chrome.storage.sync.get(["selection"]).selection,
+    mode = await chrome.storage.sync.get(["selection"]),
+    mode = mode.selection;
     await select_mode(mode);
 
     //filter word list for all nonempty guesses
@@ -29,7 +31,7 @@ async function filter_word_list(){
 
         if(eval != null){
             solve({word, eval});
-        }else{return wordList}
+        }
     }
 
 }
