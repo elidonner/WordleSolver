@@ -6,12 +6,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const numWords = document.getElementById('numWords');
 
   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  console.log(tab)
   // Send message to solver.js to get state and update
-  await chrome.tabs.sendMessage(tab.id, {type: 'from_popup'},({wordList={}}) => {
+  await chrome.tabs.sendMessage(tab.id, {type: 'from_popup'},({WORDLIST={}}) => {
     //send possible words
-    possibleHTML.innerHTML = wordList.map(word => `${word[0].toUpperCase().concat(word.slice(1,word.length))}`).join(', ')
+    possibleHTML.innerHTML = WORDLIST.map(word => `${word[0].toUpperCase().concat(word.slice(1,word.length))}`).join(', ')
 
     // send number of posible words, if statement for including s or not
-    numWords.innerHTML = `${wordList.length} possible word${wordList.length > 1 ? 's' : ''}`;
+    numWords.innerHTML = `${WORDLIST.length} possible word${WORDLIST.length > 1 ? 's' : ''}`;
   });
 })

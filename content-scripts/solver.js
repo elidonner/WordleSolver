@@ -1,39 +1,39 @@
 //global variables
-let alphabet = 'abcdefghijklmnopqrstuvwxyz'
-var wordList;
-var answer;
-//chrome.storage.sync.set({'selection': selection}); //initialize
-select_mode(); //initialize to less cheating
+var WORDLIST;
+var mode;
 
 
-async function select_mode(mode = "lessCheating"){
-    if (mode == "cheating"){
-        wordList = wordleWords.map((x) => x);
-    }else if(mode == "mostCheating"){
-        wordList = answer;
-    } else{
-        wordList = possibleFiveLetterWords.map((x) => x);
+async function select_mode(new_mode = "lessCheating", answer = ""){
+  //if the new mode is different from the old mode, change the available words
+  if (new_mode != mode || WORDLIST == null) {
+    mode = new_mode
+    if (mode == "lessCheating"){
+      WORDLIST = wordleWords.map((x) => x);
+    }else if(mode == "cheating"){
+      WORDLIST = possibleFiveLetterWords.map((x) => x);
+    } else {
+      WORDLIST = answer
     }
+  }
 }
 
 async function filter_word_list(){
     let { boardState = [], evaluations = [], solution = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
-    answer = [solution]; //weird global variable thing
+    answer = [solution]; //make the solution into the global variable answer
 
-    mode = await chrome.storage.sync.get(["selection"]),
-    mode = mode.selection;
-    await select_mode(mode);
+    new_mode = await chrome.storage.sync.get(["selection"]),
+    new_mode = new_mode.selection;
+    await select_mode(new_mode, answer);
 
     //filter word list for all nonempty guesses
     for (let i = 0; i<boardState.length; i++){
-        eval = convert_eval(evaluations[i]);
-        let word = boardState[i];
+      let eval = convert_eval(evaluations[i]);
+      let word = boardState[i];
 
-        if(eval != null){
-            solve({word, eval});
-        }
+      if (eval == null) {break;}
+      
+      solve(word, eval);
     }
-
 }
 
 //make eval something a little easier on my solver 
@@ -52,115 +52,99 @@ function convert_eval(evaluation){
         }
         return eval
     } else{return null;}
-
 }
 
 //TODO: break into functions for readabillity
-function solve(guess){
-  word = guess.word; response = guess.eval;
+function solve(word, response){
 
   for(let i = 0; i < response.length; i++){
-    if(response[i] == 0){
-      try{
-        alphabet = alphabet.replace(word[0],'');
-      } catch {
-        text1 = "why'd you guess that? you already used "
-        text2 = ", silly!"
-        text = text1.concat(word[i]).concat(text2)
-        return text
-      }
-    }
-  }
-
-  new_list = wordList
-  for(let i = 0; i < response.length; i++){
-    //if the letter was green, new_list only contains words with green letter in this index
+    //if the letter was green, WORDLIST only contains words with green letter in this index
     if(response[i] == 1){
-      temp_list = [];
-      for (let j=0; j < new_list.length; j++){
-        if(word[i] == new_list[j][i]){
-          temp_list.push(new_list[j]);
+      let temp_list = [];
+      for (let j=0; j < WORDLIST.length; j++){
+        if(word[i] == WORDLIST[j][i]){
+          temp_list.push(WORDLIST[j]);
           //recheck same index since we popped
         }
       }
-      new_list = temp_list
+      WORDLIST = temp_list;
     }
 
-    //if the letter was gray, new_list doesn't contain words with this letter, unless that letter is green elsewhere
+    //if the letter was gray, WORDLIST doesn't contain words with this letter, unless that letter is green elsewhere
     else if(response[i] == 0){
-      new_list = check_gray(word, response, new_list, i)
+      check_gray(word, response, i)
     }
 
-    //or if the letter was yellow, new_list doesn't contain words with letter in this index, but contains only words with this letter in remaining indices (gray indices)
+
+    //or if the letter was yellow, WORDLIST doesn't contain words with letter in this index, but contains only words with this letter in remaining indices (gray indices)
     else if(response[i] == 2){
 
         //get rid of all words with yellow leter in this index
         let j = 0
-        while(j < new_list.length){
-            if (word[i] == new_list[j][i]){
-              new_list.splice(j,1);
+        while(j < WORDLIST.length){
+            if (word[i] == WORDLIST[j][i]){
+              WORDLIST.splice(j,1);
               //recheck same index since we popped
             } else{j++;}
         }
 
-        //new_list only contains words with yellow letter in remaining indices
-        temp_list = []
+        //WORDLIST should only contain words with yellow letter in remaining indices
+        let temp_list = []
         for (j=0; j < response.length; j++){
           //if the letter is not green
           if(response[j] != 1){
-            //find words with yellow letter in this index (I have already removed words for yellow letter in index, so new_list is safe)
-            for(let q = 0; q < new_list.length; q++){
-              if(word[i] == new_list[q][j]){
-                temp_list.push(new_list[q]);
-              }
-              //recheck same index since we popped
+            //find words with yellow letter in this index (I have already removed words for yellow letter in index, so WORDLIST is safe)
+            q=0
+            while(q < WORDLIST.length) {
+              if(word[i] == WORDLIST[q][j]){
+                temp_list.push(WORDLIST[q]);
+                WORDLIST.splice(q,1); //get rid of word from WORDLIST so we don't duplicate
+              } else{q++;}
             }
           }
         }
                     
-        new_list = temp_list;
+        WORDLIST = temp_list;
     }
   }
-
-
-  wordList = new_list.sort(); //update global
+  WORDLIST.sort()
 }
 
 
-//check the gray word, check for edge case that a gray letter is already in the word green elsewhere
-function check_gray(word, response, new_list, index){
+//check a gray letter, check edge case of word with more than one of same letter
+function check_gray(word, response, index){
   i = index;
-  //check if the letter is somewhere else green
+  
+  //check if gray letter is elsewhere in the guess
   for(let j = 0; j<response.length; j++){
-    if(j!=i){
-      if(word[i]==word[j]){
-        if(response[j]!=0){
-          // If we have reached there, then gray letter is elsewhere in the word, just delete all the words that have the letter in this index
-          let q = 0
-          while(q < new_list.length){
-              if (word[i] == new_list[q][i]){
-                new_list.splice(q,1);
-                //recheck same index since we popped
-              } else{q++;}
-          }
-          return new_list;
-        }
+    // j!=i: don't check the letter itself
+    // word[i] == word[j] the letter is being reused in a guess
+    // response [j] != 0 the reused letter is yellow
+    if(j!=i && word[i] == word[j] && response[j] != 0){
+      // If we have reached here , then gray letter is elsewhere in the word, just delete all the words that have the letter in this index
+      let q = 0
+      while(q < WORDLIST.length){
+          if (word[i] == WORDLIST[q][i]){
+            WORDLIST.splice(q,1);
+            //recheck same index since we popped
+          } else{q++;}
       }
+      //exit the function
+      return;
     }
   }
 
+  //if we didn't find the gray letter elsewhere in the word
   //new list doesn't contain word with this letter
   let j = 0;
-  while(j < new_list.length){
-      if(new_list[j].includes(word[i])){
-        new_list.splice(j,1);
+  while(j < WORDLIST.length){
+      if(WORDLIST[j].includes(word[i])){
+        WORDLIST.splice(j,1);
         //recheck same index since we popped
       } else{j++;}
   }
-  return new_list
+  return;
 }
-
-
 
 
 /*
@@ -181,20 +165,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'from_popup') {
         try {
             filter_word_list();
-            sendResponse({wordList});
+            sendResponse({WORDLIST});
         } catch (e) {
             console.error("encountered JSON parse error", e);
         }
     }
-  });
+});
 
- // Listen to keyboard enters to update
+//  Listen to keyboard enters to update
 document.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') {
     filter_word_list();
     }
 })
 
-//run filter_word_list when page opens, should help if previous guesses have been made
+// run filter_word_list when page opens, should help if previous guesses have been made
 filter_word_list();
   
