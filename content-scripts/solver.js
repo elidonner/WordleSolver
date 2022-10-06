@@ -8,9 +8,9 @@ async function select_mode(new_mode = "lessCheating", answer = ""){
   if (new_mode != mode || WORDLIST == null) {
     mode = new_mode
     if (mode == "lessCheating"){
-      WORDLIST = wordleWords.map((x) => x);
-    }else if(mode == "cheating"){
       WORDLIST = possibleFiveLetterWords.map((x) => x);
+    }else if(mode == "cheating"){
+      WORDLIST = wordleWords.map((x) => x);
     } else {
       WORDLIST = answer
     }
@@ -181,4 +181,3 @@ document.addEventListener('keyup', (e) => {
 
 // run filter_word_list when page opens, should help if previous guesses have been made
 filter_word_list();
-  
