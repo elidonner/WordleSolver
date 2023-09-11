@@ -1,34 +1,22 @@
 //global variables
-var WORDLIST;
-var mode;
-
-
-async function select_mode(new_mode = "lessCheating", answer = ""){
-  //if the new mode is different from the old mode, change the available words
-  if (new_mode != mode || WORDLIST == null) {
-    mode = new_mode
-    if (mode == "lessCheating"){
-      WORDLIST = possibleFiveLetterWords.map((x) => x);
-    }else if(mode == "cheating"){
-      WORDLIST = wordleWords.map((x) => x);
-    } else {
-      WORDLIST = answer
-    }
-  }
-}
+var WORDLIST = possibleFiveLetterWords.map((x) => x);
+const States = Object.freeze({
+  CORRECT: "correct",
+  PRESENT: "present in another position",
+  ABSENT: "absent",
+  EMPTY: "empty"
+});
 
 async function filter_word_list(){
-    let { boardState = [], evaluations = [], solution = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
-    answer = [solution]; //make the solution into the global variable answer
+    // let { boardState = [], evaluations = [], solution = [] } = JSON.parse(window.localStorage.gameState || window.localStorage["nyt-wordle-state"]);
+    let guesses = Array.from(document.querySelectorAll('[data-state]')).slice(0,30).map(item => item.ariaLabel);
 
-    new_mode = await chrome.storage.sync.get(["selection"]),
-    new_mode = new_mode.selection;
-    await select_mode(new_mode, answer);
+    // Change 1x30 array into 6x5 array
+    let boardState = guesses.reduce((rows, key, index) => (index % 5 == 0 ? rows.push([key]) : rows[rows.length-1].push(key)) && rows, []);
 
     //filter word list for all nonempty guesses
-    for (let i = 0; i<boardState.length; i++){
-      let eval = convert_eval(evaluations[i]);
-      let word = boardState[i];
+    for (let row of boardState){
+      let [eval, word] = evaluate(row);
 
       if (eval == null) {break;}
       
@@ -36,26 +24,36 @@ async function filter_word_list(){
     }
 }
 
-//make eval something a little easier on my solver 
-//FIXME: probably unnecessary
-function convert_eval(evaluation){
-    let eval = "";
-    if(evaluation != null){
-        for (let j=0; j<evaluation.length; j++){
-            if (evaluation[j] == "correct"){
-                eval = eval.concat("1")
-            } else if (evaluation[j] == "absent"){
-                eval = eval.concat("0")
-            }else if (evaluation[j] == "present"){
-                eval = eval.concat("2")
-            }else{return null;}
-        }
-        return eval
-    } else{return null;}
+function evaluate(row){
+  let eval = "";
+  let word = "";
+
+  for (let [index, guess] of row.entries()) {
+    let [position, letter, evaluation] = guess.toLowerCase().split(', ');
+
+    if(letter != States.EMPTY){
+      word = word.concat(letter);
+      switch(evaluation) {
+        case States.CORRECT:
+          eval = eval.concat("1");
+          break;
+        case States.PRESENT:
+          eval = eval.concat("2");
+          break;
+        case States.ABSENT:
+          eval = eval.concat("0");
+          break;
+      }
+    } else {break;}
+  }
+
+  if (eval.length == 5) {return [eval, word]}
+  else {return [null,null]}
 }
 
 //TODO: break into functions for readabillity
 function solve(word, response){
+  console.log(word,response)
 
   for(let i = 0; i < response.length; i++){
     //if the letter was green, WORDLIST only contains words with green letter in this index
@@ -158,14 +156,17 @@ CHROME EVENT LISTENERS
 
 
 // Listen to message from popup.js and respond
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(
+  function(message, sender, sendResponse) {
     // Arbitrary string allowing the background to distinguish
     // message types. You might also be able to determine this
     // from the `sender`.
     if (message.type === 'from_popup') {
+      console.log("In thingy")
         try {
             filter_word_list();
-            sendResponse({WORDLIST});
+            console.log(WORDLIST);
+            sendResponse(WORDLIST);
         } catch (e) {
             console.error("encountered JSON parse error", e);
         }
